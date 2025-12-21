@@ -1,0 +1,6 @@
+{
+  "name": "HASS Proxmox API",
+  "domain": "hass_proxmox_api",
+  "content_in_root": false,
+  "render_readme": true
+}

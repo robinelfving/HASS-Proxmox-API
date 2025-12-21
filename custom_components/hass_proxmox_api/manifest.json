@@ -1,0 +1,9 @@
+{
+  "domain": "hass_proxmox_api",
+  "name": "HASS Proxmox API",
+  "version": "0.0",
+  "config_flow": true,
+  "documentation": "https://github.com/robinelfving/HASS-Proxmox-API",
+  "codeowners": ["@robinelfving"],
+  "iot_class": "local_polling"
+}
