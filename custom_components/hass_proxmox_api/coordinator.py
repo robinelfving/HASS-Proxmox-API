@@ -7,9 +7,10 @@ _LOGGER = logging.getLogger(__name__)
 DEFAULT_UPDATE_INTERVAL = timedelta(seconds=30)
 
 class ProxmoxDataCoordinator(DataUpdateCoordinator):
-    def __init__(self, hass, api_client, nodes):
+    def __init__(self, hass, api_client, nodes, display_name=None):
         self.api_client = api_client
-        self.nodes_config = [{"node": node} for node in nodes]
+        self.display_name = display_name
+        self.nodes_config = [{"node": node, "display_name": display_name or node} for node in nodes]
 
         super().__init__(
             hass,
@@ -17,9 +18,6 @@ class ProxmoxDataCoordinator(DataUpdateCoordinator):
             name="Proxmox Nodes",
             update_interval=DEFAULT_UPDATE_INTERVAL,
         )
-
-        for node in self.nodes_config:
-            node["display_name"] = node["node"]
 
         self.data = []
 
@@ -33,7 +31,7 @@ class ProxmoxDataCoordinator(DataUpdateCoordinator):
                     node_status = await self.api_client.get_node_status(node_name)
                     _LOGGER.debug("Node status for %s: %s", node_name, node_status)
                     if node_status:
-                        node_status["node"] = display_name
+                        node_status["node"] = node_name
                         new_data.append(node_status)
                 except Exception as err:
                     _LOGGER.error("Failed to fetch data for node %s: %s", node_name, err)

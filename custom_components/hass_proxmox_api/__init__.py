@@ -25,6 +25,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Hämta noder från config entry, eller från API om tomt
     nodes = entry.data.get("nodes", [])
+    display_name = entry.data.get(CONF_HOST)
     if not nodes:
         try:
             nodes = await api_client.get_nodes()
@@ -37,7 +38,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.warning("No Proxmox nodes found. Sensors will not be created.")
 
     # Skapa koordinator med nodlistan
-    coordinator = ProxmoxDataCoordinator(hass, api_client=api_client, nodes=nodes)
+    coordinator = ProxmoxDataCoordinator(hass, api_client=api_client, nodes=nodes, display_name=display_name)
     await coordinator.async_config_entry_first_refresh()
 
     # Spara koordinatorn för sensorerna
