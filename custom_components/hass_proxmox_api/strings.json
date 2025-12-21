@@ -1,9 +1,12 @@
 {
+  "component": {
+    "name": "HASS Proxmox API"
+  },
   "config": {
     "step": {
       "user": {
         "title": "Proxmox",
-        "description": "Ange Proxmox API-token"
+        "description": "Enter your Proxmox API token."
       }
     }
   }

@@ -1,62 +1,44 @@
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from datetime import timedelta
+import logging
 
-from homeassistant.helpers.update_coordinator import (
-    DataUpdateCoordinator,
-    UpdateFailed,
-)
-from homeassistant.core import HomeAssistant
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
+_LOGGER = logging.getLogger(__name__)
 
-from .const import (
-    DOMAIN,
-    CONF_HOST,
-    CONF_TOKEN_ID,
-    CONF_TOKEN_SECRET,
-    CONF_VERIFY_SSL,
-)
+DEFAULT_UPDATE_INTERVAL = timedelta(seconds=30)
 
-
-class ProxmoxCoordinator(DataUpdateCoordinator):
-    def __init__(self, hass: HomeAssistant, entry: ConfigEntry):
-        self.hass = hass
-        self.entry = entry
-
-        self.host = entry.data[CONF_HOST]
-        self.token_id = entry.data[CONF_TOKEN_ID]
-        self.token_secret = entry.data[CONF_TOKEN_SECRET]
-        self.verify_ssl = entry.data[CONF_VERIFY_SSL]
-
-        self.headers = {
-            "Authorization": f"PVEAPIToken={self.token_id}={self.token_secret}"
-        }
-
-        self.session = async_get_clientsession(hass)
+class ProxmoxDataCoordinator(DataUpdateCoordinator):
+    def __init__(self, hass, api_client, nodes):
+        self.api_client = api_client
+        self.nodes_config = [{"node": node} for node in nodes]
 
         super().__init__(
             hass,
-            logger=None,
-            name=DOMAIN,
-            update_interval=timedelta(seconds=30),
+            _LOGGER,
+            name="Proxmox Nodes",
+            update_interval=DEFAULT_UPDATE_INTERVAL,
         )
 
+        for node in self.nodes_config:
+            node["display_name"] = node["node"]
+
+        self.data = []
+
     async def _async_update_data(self):
-        url = f"https://{self.host}:8006/api2/json/nodes"
-
         try:
-            async with self.session.get(
-                url,
-                headers=self.headers,
-                ssl=self.verify_ssl,
-                timeout=10,
-            ) as response:
-                if response.status != 200:
-                    raise UpdateFailed(
-                        f"Invalid response from Proxmox: {response.status}"
-                    )
-
-                payload = await response.json()
-                return payload["data"]
-
+            new_data = []
+            for node in self.nodes_config:
+                node_name = node["node"]  # använd exakt namn
+                display_name = node["display_name"]
+                try:
+                    node_status = await self.api_client.get_node_status(node_name)
+                    _LOGGER.debug("Node status for %s: %s", node_name, node_status)
+                    if node_status:
+                        node_status["node"] = display_name
+                        new_data.append(node_status)
+                except Exception as err:
+                    _LOGGER.error("Failed to fetch data for node %s: %s", node_name, err)
+                    # fortsätt med övriga noder även om en nod misslyckas
+                    continue
+            return new_data
         except Exception as err:
-            raise UpdateFailed(f"Proxmox API error: {err}") from err
+            raise UpdateFailed(f"Failed to fetch data from Proxmox API: {err}") from err

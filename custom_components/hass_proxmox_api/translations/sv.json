@@ -1,0 +1,26 @@
+{
+  "component": {
+    "name": "HASS Proxmox API"
+  },
+  "config": {
+    "step": {
+      "user": {
+        "title": "Proxmox",
+        "description": "Ange host och valfri IP. Om IP anges används den först."
+      }
+    },
+    "error": {
+      "cannot_connect": "Kan inte nå Proxmox-servern. Kontrollera IP/host och token."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "cpu": {"name": "CPU", "state": "CPU-användning (%)"},
+      "memory": {"name": "Minne", "state": "Minnesanvändning (%)"},
+      "uptime": {"name": "Uptime", "state": "Upptid (dagar)"}
+    }
+  },
+  "device": {
+    "proxmox_node": {"name": "Proxmox-nod", "model": "Proxmox VE Node", "manufacturer": "Proxmox"}
+  }
+}
