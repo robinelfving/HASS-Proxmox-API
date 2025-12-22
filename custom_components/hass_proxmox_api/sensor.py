@@ -5,8 +5,8 @@ from .const import DOMAIN
 
 SENSOR_TYPES = [
     ("cpu", "CPU", "mdi:cpu-64-bit", "%"),
-    ("mem", "Minne", "mdi:memory", "%"),
-    ("uptime", "Uppetid", "mdi:clock-outline", "dagar"),
+    ("memory", "Minne", "mdi:memory", "%"),
+    ("uptime", "Upptid", "mdi:clock-outline", "dagar"),
 ]
 
 async def async_setup_entry(hass, entry, async_add_entities):
@@ -58,12 +58,29 @@ class ProxmoxNodeSensor(CoordinatorEntity, SensorEntity):
             return None
 
         if self.key == "cpu":
-            return round(data.get("cpu", 0) * 100, 1)
-        elif self.key == "mem":
-            mem = data.get("mem", 0)
-            maxmem = data.get("maxmem", 1)
-            return round((mem / maxmem) * 100, 1)
-        elif self.key == "uptime":
+            cpu = data.get("cpu", 0)
+
+            if cpu is None:
+                return None
+            
+            return round(cpu * 100, 1)
+
+        if self.key == "memory":
+            memory = data.get("memory", {})
+            used = memory.get("used")
+            total = memory.get("total")
+
+            if used is None or total in (None, 0):
+                return None
+
+            return round((used / total) * 100, 1)
+
+        if self.key == "uptime":
             uptime = data.get("uptime")
-            return round(uptime / 86400, 0) if uptime is not None else None
-        return None
+
+            if uptime is None:
+                return None
+            
+            return round(uptime / 86400, 0)  # omvandla sekunder → dagar
+
+        return None 

@@ -24,8 +24,10 @@ class ProxmoxApiClient:
         node = data["data"]
         return {
             "cpu": node.get("cpu", 0),
-            "mem": node.get("mem", 0),
-            "maxmem": node.get("maxmem", 1),
+            "memory": {
+                "used": node.get("memory", {}).get("used"),
+                "total": node.get("memory", {}).get("total"),
+        },
             "uptime": node.get("uptime", 0),
         }
 
