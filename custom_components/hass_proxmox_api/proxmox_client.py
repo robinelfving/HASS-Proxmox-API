@@ -10,6 +10,7 @@ class ProxmoxApiClient:
         self.token_secret = token_secret
         self.verify_ssl = verify_ssl
         self.base_url = f"https://{self.host}:8006/api2/json"
+        self._session: aiohttp.ClientSession | None = None
 
     async def get_nodes(self):
         url = f"{self.base_url}/nodes"
@@ -70,13 +71,18 @@ class ProxmoxApiClient:
             "uptime": vm.get("uptime", 0),
         }
 
+    async def _get_session(self) -> aiohttp.ClientSession:
+        if self._session is None or self._session.closed:
+            timeout = aiohttp.ClientTimeout(total=10)
+            self._session = aiohttp.ClientSession(timeout=timeout)
+        return self._session
+
     async def _get(self, url: str):
         headers = {"Authorization": f"PVEAPIToken={self.token_id}={self.token_secret}"}
-        timeout = aiohttp.ClientTimeout(total=10)
-        async with aiohttp.ClientSession(timeout=timeout) as session:
-            async with session.get(url, headers=headers, ssl=self.verify_ssl) as resp:
-                if resp.status != 200:
-                    text = await resp.text()
-                    _LOGGER.error("Proxmox API returned %s: %s", resp.status, text)
-                    raise Exception(f"Invalid response from Proxmox API: {resp.status}")
-                return await resp.json()
+        session = await self._get_session()
+        async with session.get(url, headers=headers, ssl=self.verify_ssl) as resp:
+            if resp.status != 200:
+                text = await resp.text()
+                _LOGGER.error("Proxmox API returned %s: %s", resp.status, text)
+                raise Exception(f"Invalid response from Proxmox API: {resp.status}")
+            return await resp.json()
