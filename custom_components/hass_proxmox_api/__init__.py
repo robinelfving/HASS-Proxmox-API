@@ -27,7 +27,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.warning("No Proxmox nodes found. Sensors will not be created.")
 
     # Node coordinator
-    node_coordinator = ProxmoxDataCoordinator(
+    node_coordinator = ProxmoxNodeCoordinator(
         hass,
         api_client=api_client,
         nodes=nodes,
