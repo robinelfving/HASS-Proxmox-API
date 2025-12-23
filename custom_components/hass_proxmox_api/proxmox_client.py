@@ -31,6 +31,7 @@ class ProxmoxApiClient:
             "uptime": node.get("uptime", 0),
         }
 
+#List VMs
     async def get_qemu_list(self, node_name: str):
         url = f"{self.base_url}/nodes/{node_name}/qemu"
         data = await self._get(url)
@@ -47,7 +48,7 @@ class ProxmoxApiClient:
             for vm in data["data"]
         ]
 
-#VMs
+#VM Status
     async def get_qemu_status(self, node_name: str, vmid: int):
         url = f"{self.base_url}/nodes/{node_name}/qemu/{vmid}/status/current"
         data = await self._get(url)
