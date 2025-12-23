@@ -4,6 +4,7 @@ import logging
 
 from .const import DOMAIN, CONF_HOST, CONF_IP, CONF_TOKEN_ID, CONF_TOKEN_SECRET, CONF_VERIFY_SSL
 from .coordinator import ProxmoxDataCoordinator
+from .coordinator_qemu import ProxmoxQemuCoordinator
 from .proxmox_client import ProxmoxApiClient
 
 PLATFORMS = ["sensor"]
