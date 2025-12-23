@@ -38,11 +38,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.warning("No Proxmox nodes found. Sensors will not be created.")
 
     # Skapa koordinator med nodlistan
-    coordinator = ProxmoxDataCoordinator(hass, api_client=api_client, nodes=nodes, display_name=display_name)
+    node_coordinator = ProxmoxDataCoordinator(hass, api_client=api_client, nodes=nodes, display_name=display_name)
     await coordinator.async_config_entry_first_refresh()
 
+
+    # QEMU coordinator (NY)
+    qemu_coordinator = ProxmoxQemuCoordinator(hass,api_client=api_client,nodes=nodes)
+    await qemu_coordinator.async_config_entry_first_refresh()
+
     # Spara koordinatorn för sensorerna
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
+    "node": node_coordinator,
+    "qemu": qemu_coordinator,
+}
 
     # Starta sensorer/platformar
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
