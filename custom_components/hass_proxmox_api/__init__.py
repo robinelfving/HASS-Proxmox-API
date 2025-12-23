@@ -49,9 +49,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Spara koordinatorn för sensorerna
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
-    "node": node_coordinator,
-    "qemu": qemu_coordinator,
-}
+      "node": node_coordinator,
+      "qemu": qemu_coordinator,
+    }
 
     # Starta sensorer/platformar
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
