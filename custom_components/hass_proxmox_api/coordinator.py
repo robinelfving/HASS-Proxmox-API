@@ -6,7 +6,7 @@ _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_UPDATE_INTERVAL = timedelta(seconds=30)
 
-class ProxmoxDataCoordinator(DataUpdateCoordinator):
+class ProxmoxNodeCoordinator(DataUpdateCoordinator):
     def __init__(self, hass, api_client, nodes, display_name=None):
         self.api_client = api_client
         self.display_name = display_name
