@@ -31,6 +31,44 @@ class ProxmoxApiClient:
             "uptime": node.get("uptime", 0),
         }
 
+    async def get_qemu_list(self, node_name: str):
+        url = f"{self.base_url}/nodes/{node_name}/qemu"
+        data = await self._get(url)
+
+        if "data" not in data:
+            return []
+
+        return [
+            {
+                "vmid": vm.get("vmid"),
+                "name": vm.get("name"),
+                "status": vm.get("status"),
+            }
+            for vm in data["data"]
+        ]
+
+#VMs
+    async def get_qemu_status(self, node_name: str, vmid: int):
+        url = f"{self.base_url}/nodes/{node_name}/qemu/{vmid}/status/current"
+        data = await self._get(url)
+
+        if "data" not in data:
+            return None
+
+        vm = data["data"]
+
+        return {
+            "name": vm.get("name"),
+            "status": vm.get("status"),
+            "cpu": vm.get("cpu", 0),
+            "cpus": vm.get("cpus"),
+            "memory": {
+                "used": vm.get("mem"),
+                "total": vm.get("maxmem"),
+            },
+            "uptime": vm.get("uptime", 0),
+        }
+
     async def _get(self, url: str):
         headers = {"Authorization": f"PVEAPIToken={self.token_id}={self.token_secret}"}
         timeout = aiohttp.ClientTimeout(total=10)
