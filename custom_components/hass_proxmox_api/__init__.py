@@ -3,8 +3,7 @@ from homeassistant.core import HomeAssistant
 import logging
 
 from .const import DOMAIN, CONF_HOST, CONF_IP, CONF_TOKEN_ID, CONF_TOKEN_SECRET, CONF_VERIFY_SSL
-from .coordinator_node import ProxmoxNodeCoordinator
-from .coordinator_qemu import ProxmoxQemuCoordinator
+from .coordinator import ProxmoxNodeCoordinator, ProxmoxQemuCoordinator
 from .proxmox_client import ProxmoxApiClient
 
 PLATFORMS = ["sensor"]
@@ -62,6 +61,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     }
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    return True
+
+
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Unload a config entry."""
+    await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    hass.data[DOMAIN].pop(entry.entry_id, None)
     return True
 
 
