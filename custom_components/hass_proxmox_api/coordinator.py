@@ -40,3 +40,30 @@ class ProxmoxDataCoordinator(DataUpdateCoordinator):
             return new_data
         except Exception as err:
             raise UpdateFailed(f"Failed to fetch data from Proxmox API: {err}") from err
+
+class ProxmoxQemuCoordinator(DataUpdateCoordinator):
+    def __init__(self, hass, api_client, nodes):
+        self.api_client = api_client
+        self.nodes = nodes
+
+        super().__init__(
+            hass,
+            _LOGGER,
+            name="Proxmox QEMU",
+            update_interval=DEFAULT_UPDATE_INTERVAL,
+        )
+
+    async def _async_update_data(self):
+        data = []
+
+        for node in self.nodes:
+            qemus = await self.api_client.get_qemu_list(node)
+            for vm in qemus:
+                vmid = vm["vmid"]
+                status = await self.api_client.get_qemu_status(node, vmid)
+                if status:
+                    status["node"] = node
+                    status["vmid"] = vmid
+                    data.append(status)
+
+        return data
