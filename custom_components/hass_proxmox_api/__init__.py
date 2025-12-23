@@ -1,18 +1,6 @@
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
-import logging
-
-from .const import DOMAIN, CONF_HOST, CONF_IP, CONF_TOKEN_ID, CONF_TOKEN_SECRET, CONF_VERIFY_SSL
-from .coordinator import ProxmoxDataCoordinator
-from .coordinator_qemu import ProxmoxQemuCoordinator
-from .proxmox_client import ProxmoxApiClient
-
-PLATFORMS = ["sensor"]
-_LOGGER = logging.getLogger(__name__)
-
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Setup Proxmox integration from a config entry."""
-    # Använd IP om det finns, annars host
+
     host_ip = entry.data.get(CONF_IP) or entry.data.get(CONF_HOST)
     token_id = entry.data.get(CONF_TOKEN_ID)
     token_secret = entry.data.get(CONF_TOKEN_SECRET)
@@ -24,9 +12,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     api_client = ProxmoxApiClient(host_ip, token_id, token_secret, verify_ssl)
 
-    # Hämta noder från config entry, eller från API om tomt
     nodes = entry.data.get("nodes", [])
     display_name = entry.data.get(CONF_HOST)
+
     if not nodes:
         try:
             nodes = await api_client.get_nodes()
@@ -38,28 +26,28 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if not nodes:
         _LOGGER.warning("No Proxmox nodes found. Sensors will not be created.")
 
-    # Skapa koordinator med nodlistan
-    node_coordinator = ProxmoxDataCoordinator(hass, api_client=api_client, nodes=nodes, display_name=display_name)
-    await coordinator.async_config_entry_first_refresh()
+    # Node coordinator
+    node_coordinator = ProxmoxDataCoordinator(
+        hass,
+        api_client=api_client,
+        nodes=nodes,
+        display_name=display_name,
+    )
+    await node_coordinator.async_config_entry_first_refresh()
 
-
-    # QEMU coordinator (NY)
-    qemu_coordinator = ProxmoxQemuCoordinator(hass,api_client=api_client,nodes=nodes)
+    # QEMU coordinator
+    qemu_coordinator = ProxmoxQemuCoordinator(
+        hass,
+        api_client=api_client,
+        nodes=nodes,
+    )
     await qemu_coordinator.async_config_entry_first_refresh()
 
-    # Spara koordinatorn för sensorerna
+    # Spara båda coordinators
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
-    "node": node_coordinator,
-    "qemu": qemu_coordinator,
-}
+        "node": node_coordinator,
+        "qemu": qemu_coordinator,
+    }
 
-    # Starta sensorer/platformar
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    return True
-
-
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Unload a config entry."""
-    await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    hass.data[DOMAIN].pop(entry.entry_id, None)
     return True
