@@ -4,6 +4,8 @@
   "version": "1.0",
   "config_flow": true,
   "documentation": "https://github.com/robinelfving/HASS-Proxmox-API",
+  "issue_tracker": "https://github.com/robinelfving/HASS-Proxmox-API/issues",
   "codeowners": ["@robinelfving"],
+  "config_flow": true
   "iot_class": "local_polling"
 }
