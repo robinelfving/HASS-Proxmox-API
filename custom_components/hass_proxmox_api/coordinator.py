@@ -19,8 +19,6 @@ class ProxmoxNodeCoordinator(DataUpdateCoordinator):
             update_interval=DEFAULT_UPDATE_INTERVAL,
         )
 
-        self.data = []
-
     async def _async_update_data(self):
         try:
             new_data = []
