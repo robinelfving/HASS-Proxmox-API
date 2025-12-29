@@ -1,47 +1,48 @@
 # HASS Proxmox API
 
-En Home Assistant-integration för att övervaka Proxmox-noder via API.  
-Skapar en **enhet per nod** med tre sensorer: CPU, Memory och Uptime.
+A Home Assistant integration for monitoring Proxmox nodes via the API.  
+Creates **one device per node** with three sensors: CPU, Memory, and Uptime.
 
 ---
 
-## Funktioner
+## Features
 
-- Enhet per Proxmox-nod
-- Tre sensorer per nod:
+- One device per Proxmox node
+- Three sensors per node:
   - CPU (%)
   - Memory (%)
-  - Uptime (dagar)
-- Case-insensitive identifier, men display-name behålls som användaren skrev
-- API-klient separerad för enklare underhåll
+  - Uptime (days)
+- Case-insensitive identifiers, while the display name is preserved as entered by the user
+- Separate API client for easier maintenance
 
 ---
 
 ## Installation via HACS
 
-1. Kopiera mappen `hass_proxmox_api` till `custom_components/` i din Home Assistant installation.
-2. Starta om Home Assistant.
-3. Gå till **Inställningar → Integrationer → Lägg till Integration → HASS Proxmox API**.
-4. Fyll i:
-   - Host (eller IP)
+1. Copy the `hass_proxmox_api` folder to `custom_components/` in your Home Assistant installation.
+2. Restart Home Assistant.
+3. Go to **Settings → Integrations → Add Integration → HASS Proxmox API**.
+4. Enter:
+   - Host (or IP)
    - Token ID
    - Token Secret
-   - (Valfritt) IP-adress
-   - (Valfritt) Verify SSL
+   - (Optional) IP address
+   - (Optional) Verify SSL
 
 ---
 
 ## Config Flow
 
-1. Home Assistant kommer att validera anslutningen mot Proxmox API med det angivna tokenet.
-2. Om anslutningen lyckas skapas en config entry.
-3. Sensorn hämtar automatiskt alla noder som du har listat i `nodes` (i config entry).
+1. Home Assistant will validate the connection to the Proxmox API using the provided token.
+2. If the connection is successful, a config entry is created.
+3. The sensors automatically fetch all nodes listed in `nodes` (in the config entry).
 
-Exempel på config entry:
+Example config entry:
+
 ```yaml
 host: pve01.example.com
 token_id: "hass-api-token"
-token_secret: "hemligt"
+token_secret: "secret"
 verify_ssl: true
 nodes:
   - PVE01
