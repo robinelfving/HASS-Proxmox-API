@@ -30,6 +30,7 @@ class ProxmoxApiClient:
                 "total": node.get("memory", {}).get("total"),
         },
             "uptime": node.get("uptime", 0),
+            "pveversion": node.get("pveversion"),
         }
 
 #List VMs
