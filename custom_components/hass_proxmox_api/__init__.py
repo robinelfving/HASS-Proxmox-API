@@ -3,7 +3,7 @@ from homeassistant.core import HomeAssistant
 import logging
 
 from .const import DOMAIN, CONF_HOST, CONF_IP, CONF_TOKEN_ID, CONF_TOKEN_SECRET, CONF_VERIFY_SSL
-from .coordinator import ProxmoxNodeCoordinator, ProxmoxQemuCoordinator
+from .coordinator import ProxmoxNodeCoordinator, ProxmoxQemuCoordinator, ProxmoxLXCCoordinator
 from .proxmox_client import ProxmoxApiClient
 
 PLATFORMS = ["sensor"]
@@ -54,11 +54,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
     await qemu_coordinator.async_config_entry_first_refresh()
 
-    # Spara coordinators
+    # Efter att du skapat QEMU-coordinatorn
+    lxc_coordinator = ProxmoxLXCCoordinator(
+        hass,
+        api_client=api_client,
+        nodes=nodes,
+    )
+    await lxc_coordinator.async_config_entry_first_refresh()
+
+    # Spara coordinators i hass.data
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
         "node": node_coordinator,
         "qemu": qemu_coordinator,
+        "lxc": lxc_coordinator, 
     }
+
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True

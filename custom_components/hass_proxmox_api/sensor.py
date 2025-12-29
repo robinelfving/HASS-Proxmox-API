@@ -19,6 +19,14 @@ VM_SENSOR_TYPES = [
     ("status", "Status", "mdi:server-network", None),
 ]
 
+# Sensorer för LXCs
+LXC_SENSOR_TYPES = [
+    ("cpu", "CPU", "mdi:cpu-64-bit", "%"),
+    ("memory", "RAM", "mdi:memory", "%"),
+    ("uptime", "Uptime", "mdi:clock-outline", "d"),
+    ("status", "Status", "mdi:server-network", None),
+]
+
 async def async_setup_entry(hass, entry, async_add_entities):
     """Registrerar både nod- och VM-sensorer."""
     
@@ -43,6 +51,16 @@ async def async_setup_entry(hass, entry, async_add_entities):
         for key, label, icon, unit in VM_SENSOR_TYPES:
             entities.append(
                 ProxmoxVMSensor(qemu_coordinator, vmid, display_name, key, label, icon, unit)
+            )
+    
+    # --- LXC-SENSORER ---
+    lxc_coordinator = hass.data[DOMAIN][entry.entry_id]["lxc"]
+    for lxc in lxc_coordinator.data:
+        vmid = lxc["vmid"]
+        display_name = lxc.get("name", f"LXC {vmid}")
+        for key, label, icon, unit in LXC_SENSOR_TYPES:
+            entities.append(
+                ProxmoxLXCSensor(lxc_coordinator, vmid, display_name, key, label, icon, unit)
             )
 
     async_add_entities(entities)
@@ -136,6 +154,62 @@ class ProxmoxVMSensor(CoordinatorEntity, SensorEntity):
     @property
     def native_value(self):
         data = self._vm_data()
+        if not data:
+            return None
+
+        if self.key == "cpu":
+            self._attr_state_class = "measurement"
+            return round(data.get("cpu", 0) * 100, 1)
+
+        if self.key == "memory":
+            mem = data.get("memory", {})
+            used = mem.get("used")
+            total = mem.get("total")
+            self._attr_state_class = "measurement"
+            if used is None or total in (None, 0):
+                return None
+            return round((used / total) * 100, 1)
+
+        if self.key == "uptime":
+            uptime = data.get("uptime")
+            if uptime is None:
+                return None
+            return round(uptime / 86400, 0)
+
+        if self.key == "status":
+            return data.get("status")
+
+        return None
+
+class ProxmoxLXCSensor(CoordinatorEntity, SensorEntity):
+    """Sensorer för en Proxmox-VM."""
+    def __init__(self, coordinator, vmid, display_name, key, label, icon, unit):
+        super().__init__(coordinator)
+        self.vmid = vmid
+        self.display_name = display_name
+        self.key = key
+        self._attr_name = f"{display_name} {label}"
+        self._attr_unique_id = f"lxc_{vmid}_{key}"
+        self._attr_icon = icon
+        self._attr_native_unit_of_measurement = unit
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, f"lxc_{vmid}")},
+            name=f"Proxmox LXC {display_name}",
+            manufacturer="Proxmox",
+            model="QEMU/KVM LXC",
+        )
+
+    def _lxc_data(self):
+        if not self.coordinator.data:
+            return {}
+        for lxc in self.coordinator.data:
+            if lxc.get("vmid") == self.vmid:
+                return lxc
+        return {}
+
+    @property
+    def native_value(self):
+        data = self._lxc_data()
         if not data:
             return None
 
