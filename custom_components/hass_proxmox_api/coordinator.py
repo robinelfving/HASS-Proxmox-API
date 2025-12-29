@@ -65,3 +65,30 @@ class ProxmoxQemuCoordinator(DataUpdateCoordinator):
                     data.append(status)
 
         return data
+    
+class ProxmoxLXCCoordinator(DataUpdateCoordinator):
+    def __init__(self, hass, api_client, nodes):
+        self.api_client = api_client
+        self.nodes = nodes
+
+        super().__init__(
+            hass,
+            _LOGGER,
+            name="Proxmox LXC",
+            update_interval=DEFAULT_UPDATE_INTERVAL,
+        )
+
+    async def _async_update_data(self):
+        data = []
+
+        for node in self.nodes:
+            lxcs = await self.api_client.get_lxc_list(node)
+            for lxc in lxcs:
+                vmid = lxc["vmid"]
+                status = await self.api_client.get_lxc_status(node, vmid)
+                if status:
+                    status["node"] = node
+                    status["vmid"] = vmid
+                    data.append(status)
+
+        return data

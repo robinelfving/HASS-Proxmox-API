@@ -71,6 +71,45 @@ class ProxmoxApiClient:
             },
             "uptime": vm.get("uptime", 0),
         }
+    
+#List LXCs
+    async def get_lxc_list(self, node_name: str):
+        url = f"{self.base_url}/nodes/{node_name}/lxc"
+        data = await self._get(url)
+
+        if "data" not in data:
+            return []
+
+        return [
+            {
+                "vmid": vm.get("vmid"),
+                "name": vm.get("name"),
+                "status": vm.get("status"),
+            }
+            for vm in data["data"]
+        ]
+
+#LXCs Status
+    async def get_lxc_status(self, node_name: str, vmid: int):
+        url = f"{self.base_url}/nodes/{node_name}/lxc/{vmid}/status/current"
+        data = await self._get(url)
+
+        if "data" not in data:
+            return None
+
+        lxc = data["data"]
+
+        return {
+            "name": lxc.get("name"),
+            "status": lxc.get("status"),
+            "cpu": lxc.get("cpu", 0),
+            "cpus": lxc.get("cpus"),
+            "memory": {
+                "used": lxc.get("mem"),
+                "total": lxc.get("maxmem"),
+            },
+            "uptime": lxc.get("uptime", 0),
+        }
 
     async def _get_session(self) -> aiohttp.ClientSession:
         if self._session is None or self._session.closed:
